@@ -1,0 +1,11 @@
+This is a tool for designing and using /etc/tizen-platform.conf file.
+
+It produces the program tzplatform-tool that allow users to check and
+pretty format the /etc/tizen-platform.conf file. That tool is also used
+to generate header and source file for processing /etc/tizen-platform.conf 
+file.
+
+It also exports files to handle /etc/tizen-platform.conf file. These are
+used by some other projetcs as tize-platform-config that are the 
+implementation.
+
