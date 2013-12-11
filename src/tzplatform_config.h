@@ -78,8 +78,8 @@ int tzplatform_getenv_int(enum tzplatform_variable id);
  tizen plaform variable 'id' and the given string 'str'.
 
  The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', or,
- 'tzplatform_mkpath3'.
+ available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
+ 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
 
  Can return NULL in case of internal error.
 
@@ -91,7 +91,7 @@ int tzplatform_getenv_int(enum tzplatform_variable id);
     will return "/opt/home-yes"
 */
 extern
-const char* tzplatform_mkstr(enum tzplatform_variable id, const char * str);
+const char* tzplatform_mkstr(enum tzplatform_variable id, const char *str);
 
 /*
  Return the string resulting of the path-concatenation of string value of the 
@@ -100,8 +100,8 @@ const char* tzplatform_mkstr(enum tzplatform_variable id, const char * str);
  path-concatenation is the concatenation taking care of / characters.
 
  The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', or,
- 'tzplatform_mkpath3'.
+ available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
+ 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
 
  Can return NULL in case of internal error.
 
@@ -113,7 +113,7 @@ const char* tzplatform_mkstr(enum tzplatform_variable id, const char * str);
     will return "/opt/home/yes"
 */
 extern
-const char* tzplatform_mkpath(enum tzplatform_variable id, const char * path);
+const char* tzplatform_mkpath(enum tzplatform_variable id, const char *path);
 
 /*
  Return the string resulting of the path-concatenation of string value of the 
@@ -122,8 +122,8 @@ const char* tzplatform_mkpath(enum tzplatform_variable id, const char * path);
  path-concatenation is the concatenation taking care of / characters.
 
  The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', or,
- 'tzplatform_mkpath3'.
+ available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
+ 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
 
  Can return NULL in case of internal error.
 
@@ -135,8 +135,31 @@ const char* tzplatform_mkpath(enum tzplatform_variable id, const char * path);
     will return "/opt/home/yes/no"
 */
 extern
-const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path, 
-                                                            const char* path2);
+const char* tzplatform_mkpath3(enum tzplatform_variable id, const char *path, 
+                                                            const char *path2);
+
+/*
+ Return the string resulting of the path-concatenation of string value of the 
+ tizen plaform variable 'id' and the given strings 'path', 'path2' and 'path3'.
+
+ path-concatenation is the concatenation taking care of / characters.
+
+ The returned value is a scratch buffer (unique for the thread) that is
+ available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
+ 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
+
+ Can return NULL in case of internal error.
+
+ Example:
+    if TZ_SYS_HOME == "/opt/home" then calling
+
+       tzplatform_mkpath4(TZ_SYS_HOME,"yes","no","/maybe")
+
+    will return "/opt/home/yes/no/maybe"
+*/
+extern
+const char* tzplatform_mkpath4(enum tzplatform_variable id, const char *path, 
+                                        const char *path2, const char *path3);
 
 /*
  Return the uid for a given user name, stored in variable <id>

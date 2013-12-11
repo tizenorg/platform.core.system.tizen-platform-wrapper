@@ -546,7 +546,8 @@ const char* tzplatform_mkpath(enum tzplatform_variable id, const char * path)
     return result;
 }
 
-const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path, const char* path2)
+const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path,
+                                                        const char* path2)
 {
     const char *array[4];
     const char *result = get_lock( id);
@@ -555,6 +556,23 @@ const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path, c
         array[1] = path;
         array[2] = path2;
         array[3] = NULL;
+        result = scratchcat( 1, array);
+    }
+    unlock();
+    return result;
+}
+
+const char* tzplatform_mkpath4(enum tzplatform_variable id, const char * path,
+                                          const char* path2, const char *path3)
+{
+    const char *array[5];
+    const char *result = get_lock( id);
+    if (result != NULL) {
+        array[0] = result;
+        array[1] = path;
+        array[2] = path2;
+        array[3] = path3;
+        array[4] = NULL;
         result = scratchcat( 1, array);
     }
     unlock();
