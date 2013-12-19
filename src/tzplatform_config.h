@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 
+#include <sys/types.h>
 #include <tzplatform_variables.h>
 
 /*
