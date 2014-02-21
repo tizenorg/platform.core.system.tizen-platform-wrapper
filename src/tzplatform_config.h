@@ -78,9 +78,7 @@ int tzplatform_getenv_int(enum tzplatform_variable id);
  Return the string resulting of the concatenation of string value of the 
  tizen plaform variable 'id' and the given string 'str'.
 
- The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
- 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
+ The returned value is an allocated unique string that MUST not be freed.
 
  Can return NULL in case of internal error.
 
@@ -100,9 +98,7 @@ const char* tzplatform_mkstr(enum tzplatform_variable id, const char *str);
 
  path-concatenation is the concatenation taking care of / characters.
 
- The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
- 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
+ The returned value is an allocated unique string that MUST not be freed.
 
  Can return NULL in case of internal error.
 
@@ -122,9 +118,7 @@ const char* tzplatform_mkpath(enum tzplatform_variable id, const char *path);
 
  path-concatenation is the concatenation taking care of / characters.
 
- The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
- 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
+ The returned value is an allocated unique string that MUST not be freed.
 
  Can return NULL in case of internal error.
 
@@ -145,9 +139,7 @@ const char* tzplatform_mkpath3(enum tzplatform_variable id, const char *path,
 
  path-concatenation is the concatenation taking care of / characters.
 
- The returned value is a scratch buffer (unique for the thread) that is
- available until the next call to 'tzplatform_mkstr', 'tzplatform_mkpath', 
- 'tzplatform_mkpath3' or 'tzplatform_mkpath4'.
+ The returned value is an allocated unique string that MUST not be freed.
 
  Can return NULL in case of internal error.
 

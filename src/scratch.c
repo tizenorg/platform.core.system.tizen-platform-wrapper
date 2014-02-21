@@ -28,6 +28,7 @@
 #endif
 
 #include <stdlib.h>
+#include <memory.h>
 
 #ifndef INITIAL_SCRATCH_CAPACITY
 #define INITIAL_SCRATCH_CAPACITY  240
@@ -37,12 +38,75 @@
 #error "bad value for INITIAL_SCRATCH_CAPACITY"
 #endif
 
+#define INSTANCIATE 1
+#if INSTANCIATE
+#define SET_CAPACITY		97
+#define HASHCODE_INIT       5381
+#define HASHCODE_NEXT(H,C)  (((H) << 5) + (H) + (C))
+#ifndef NOT_MULTI_THREAD_SAFE
+#define NOT_MULTI_THREAD_SAFE
+#endif
+#endif
+
 #ifndef NOT_MULTI_THREAD_SAFE
 #include <pthread.h>
 static pthread_key_t tlskey;
 static int key_initialized = 0;
 #else
 static void *global_scratch = NULL;
+#endif
+
+#if INSTANCIATE
+/* structure for recording items in the hash map */
+struct set_item {
+	struct set_item *next;	/* chain to next item */
+	size_t hashcode;		/* hash of the string */
+	size_t length;			/* length of the string including null */
+};
+
+/* the array of recorded strings */
+static struct set_item *global_path_set[SET_CAPACITY]; /* initialized to  zeros */
+
+/* instanciate (or retrieve an instance) of the 'string' that
+is granted to have the 'length' including terminating null and a
+hash code 'hashcode' */
+static const char *instantiate(const char *string, size_t length, size_t hashcode)
+{
+	struct set_item **pp, *item;
+	char *result;
+
+	/* get first item in the table */
+	pp = &global_path_set[hashcode % SET_CAPACITY];
+	result = 0;
+	do {
+		/* inspect the item */
+		item = *pp;
+		if (!item) {
+			/* no item: create it */
+			item = malloc(length + sizeof * item);
+			if (!item)
+				return NULL;
+			/* init it */
+			item->next = 0;
+			item->hashcode = hashcode;
+			item->length = length;
+			result = (char *)(item + 1);
+			memcpy(result, string, length);
+			/* record it */
+			*pp = item;
+		} else if (item->hashcode == hashcode
+			&& item->length == length
+			&& 0 == strcmp(string, (const char *)(item + 1))) {
+			/* item found */
+			result = (char *)(item + 1);
+		} else {
+			/* try the next */
+			pp = &item->next;
+		}
+	} while (!result);
+
+	return result;
+}
 #endif
 
 /* CAUTION: in a multitheaded context, it is expected that
@@ -57,6 +121,9 @@ const char *scratchcat( int ispath, const char **strings)
     size_t length, capacity;
     const char *instr;
     char c, pc;
+#if INSTANCIATE
+	size_t hashcode = HASHCODE_INIT;
+#endif
 
     /* get the recorded pointer on scrtch area */
 #ifndef NOT_MULTI_THREAD_SAFE
@@ -139,19 +206,32 @@ const char *scratchcat( int ispath, const char **strings)
 
         /* append the char */
         pc = result[length++] = c;
+#if INSTANCIATE
+		hashcode = HASHCODE_NEXT(hashcode, (size_t)c);
+#endif
     }
 
+#if INSTANCIATE
+	return instantiate(result, length, hashcode);
+#else
     return result;
+#endif
 }
 
 
 #ifdef TEST_SCRATCH
 #include <stdio.h>
 int main(int argc, const char**argv) {
-    int ispath;
+    int ispath, iter, i;
     argv++;
     ispath = argv[0] && argv[0][0] == '-' && argv[0][1] == 'p';
-    printf("%s\n",scratchcat(ispath,argv+ispath));
+	for (i = 0 ; i < 2 ; i++) {
+		iter = ispath;
+		while (iter < argc) {
+    		const char *p = scratchcat(ispath,argv+iter++);
+    		printf("%p: %s\n",p,p);
+		}
+	}
     return 0;
 }
 #endif
