@@ -30,4 +30,6 @@ dist_pkgdata_DATA = buffer.c \
                     tzplatform_config.h \
                     tzplatform_get.c \
                     passwd.h \
-                    passwd.c
+                    passwd.c \
+                    isadmin.h \
+                    isadmin.c

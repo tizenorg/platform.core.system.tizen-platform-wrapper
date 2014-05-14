@@ -61,6 +61,8 @@
 #include "hashing.h"
 #include "init.h"
 
+#include "isadmin.h"
+
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
                     || _FOREIGN_HAS_(GID)  )
@@ -427,5 +429,11 @@ inline void initialize(struct tzplatform_context *context)
             /* TODO undefined variable */;
     }
     context->state = VALID;
+}
+
+
+char tzplatform_isadmin(int uid)
+{
+	return is_admin(uid);
 }
 
