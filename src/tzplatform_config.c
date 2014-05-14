@@ -63,6 +63,8 @@ static inline void unlock() { }
 #include "scratch.h"
 #include "passwd.h"
 
+#include "isadmin.h"
+
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
                     || _FOREIGN_HAS_(GID)  )
@@ -599,6 +601,11 @@ gid_t tzplatform_getgid(enum tzplatform_variable id)
     }
     unlock();
     return result;
+}
+
+char tzplatform_isadmin(int uid)
+{
+	return is_admin(uid);
 }
 
 #ifdef TEST

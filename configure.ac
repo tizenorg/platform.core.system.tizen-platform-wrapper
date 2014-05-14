@@ -30,6 +30,8 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([dup2 endpwent munmap strndup])
 
-AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+AC_CONFIG_FILES([
+Makefile
+src/Makefile
+tizen-platform-wrapper.pc:tizen-platform-wrapper.pc.in])
 AC_OUTPUT

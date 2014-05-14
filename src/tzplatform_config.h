@@ -182,6 +182,20 @@ uid_t tzplatform_getuid(enum tzplatform_variable id);
 extern
 gid_t tzplatform_getgid(enum tzplatform_variable id);
 
+/*
+ * Return 0 if the given uid is not in the admin group.
+ * Return 1 if the given uid is in the admin group.
+ * 
+ * If you pass the -1 value to this function it will take the current uid given
+ * by the POSIX function getuid();
+ * 
+ * This feature will be handled by Cynara : This is a temporary function
+ * 
+ * Will be removed !
+*/
+extern
+char tzplatform_isadmin(int uid);
+
 #ifdef __cplusplus
 }
 #endif
