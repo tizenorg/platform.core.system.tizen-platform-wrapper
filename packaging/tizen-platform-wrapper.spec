@@ -18,7 +18,7 @@ cp %{SOURCE1001} .
 
 %build
 %reconfigure
-make %{?_smp_mflags}
+%__make %{?_smp_mflags}
 
 %install
 %make_install
@@ -28,3 +28,5 @@ make %{?_smp_mflags}
 %license LGPL_2.0
 %{_bindir}/*
 %{_datadir}/%{name}/*
+%{_libdir}/pkgconfig/tizen-platform-wrapper.pc
+
