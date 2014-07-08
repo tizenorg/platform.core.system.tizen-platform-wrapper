@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Intel Corporation.
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -39,6 +39,15 @@ extern "C" {
 extern
 void tzplatform_reset();
 
+extern
+int tzplatform_set_user_context(const uid_t);
+
+extern
+uid_t tzplatform_get_user_context();
+
+extern
+void tzplatform_reset_user_context();
+
 /*
  Return the count of variables.
 */
@@ -54,7 +63,7 @@ const char* tzplatform_getname(enum tzplatform_variable id);
 
 /*
  Return the id of the variable of 'name'.
- Return _TZPLATFORM_VARIABLES_INVALID_ if 'name' doesn't match a 
+ Return _TZPLATFORM_VARIABLES_INVALID_ if 'name' doesn't match a
  valid variable name.
 */
 extern
@@ -75,7 +84,7 @@ extern
 int tzplatform_getenv_int(enum tzplatform_variable id);
 
 /*
- Return the string resulting of the concatenation of string value of the 
+ Return the string resulting of the concatenation of string value of the
  tizen plaform variable 'id' and the given string 'str'.
 
  The returned value is an allocated unique string that MUST not be freed.
@@ -85,7 +94,7 @@ int tzplatform_getenv_int(enum tzplatform_variable id);
  Example:
     if TZ_SYS_HOME == "/opt/home" then calling
 
-       tzplatform_mkstr(TZ_SYS_HOME,"-yes") 
+       tzplatform_mkstr(TZ_SYS_HOME,"-yes")
 
     will return "/opt/home-yes"
 */
@@ -93,7 +102,7 @@ extern
 const char* tzplatform_mkstr(enum tzplatform_variable id, const char *str);
 
 /*
- Return the string resulting of the path-concatenation of string value of the 
+ Return the string resulting of the path-concatenation of string value of the
  tizen plaform variable 'id' and the given string 'path'.
 
  path-concatenation is the concatenation taking care of / characters.
@@ -105,7 +114,7 @@ const char* tzplatform_mkstr(enum tzplatform_variable id, const char *str);
  Example:
     if TZ_SYS_HOME == "/opt/home" then calling
 
-       tzplatform_mkpath(TZ_SYS_HOME,"yes") 
+       tzplatform_mkpath(TZ_SYS_HOME,"yes")
 
     will return "/opt/home/yes"
 */
@@ -113,7 +122,7 @@ extern
 const char* tzplatform_mkpath(enum tzplatform_variable id, const char *path);
 
 /*
- Return the string resulting of the path-concatenation of string value of the 
+ Return the string resulting of the path-concatenation of string value of the
  tizen plaform variable 'id' and the given strings 'path' and 'path2'.
 
  path-concatenation is the concatenation taking care of / characters.
@@ -130,11 +139,11 @@ const char* tzplatform_mkpath(enum tzplatform_variable id, const char *path);
     will return "/opt/home/yes/no"
 */
 extern
-const char* tzplatform_mkpath3(enum tzplatform_variable id, const char *path, 
+const char* tzplatform_mkpath3(enum tzplatform_variable id, const char *path,
                                                             const char *path2);
 
 /*
- Return the string resulting of the path-concatenation of string value of the 
+ Return the string resulting of the path-concatenation of string value of the
  tizen plaform variable 'id' and the given strings 'path', 'path2' and 'path3'.
 
  path-concatenation is the concatenation taking care of / characters.
@@ -151,7 +160,7 @@ const char* tzplatform_mkpath3(enum tzplatform_variable id, const char *path,
     will return "/opt/home/yes/no/maybe"
 */
 extern
-const char* tzplatform_mkpath4(enum tzplatform_variable id, const char *path, 
+const char* tzplatform_mkpath4(enum tzplatform_variable id, const char *path,
                                         const char *path2, const char *path3);
 
 /*
@@ -160,9 +169,9 @@ const char* tzplatform_mkpath4(enum tzplatform_variable id, const char *path,
 
  Example:
 	if TZ_USER_NAME=="app" then calling:
-	   
+
 	   tzplatform_getuid(TZ_USER_NAME)
-	
+
 	will return the uid of the user 'app'
 */
 extern
@@ -174,9 +183,9 @@ uid_t tzplatform_getuid(enum tzplatform_variable id);
 
  Example:
 	if TZ_USER_GROUP=="app" then calling:
-	   
+
 	   tzplatform_getuid(TZ_USER_GROUP)
-	
+
 	will return the gid of the group 'app'
 */
 extern
