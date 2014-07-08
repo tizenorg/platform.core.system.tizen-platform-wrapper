@@ -24,26 +24,28 @@
 #ifndef FOREIGN_H
 #define FOREIGN_H
 
-#define _FOREIGN_MASK_HOME_    1
-#define _FOREIGN_MASK_UID_     2
-#define _FOREIGN_MASK_USER_    4
-#define _FOREIGN_MASK_GID_     8
-#define _FOREIGN_MASK_EHOME_  16
-#define _FOREIGN_MASK_EUID_   32
-#define _FOREIGN_MASK_EUSER_  64
+#define _FOREIGN_MASK_HOME_       1
+#define _FOREIGN_MASK_UID_        2
+#define _FOREIGN_MASK_USER_       4
+#define _FOREIGN_MASK_GID_        8
+#define _FOREIGN_MASK_EHOME_     16
+#define _FOREIGN_MASK_EUID_      32
+#define _FOREIGN_MASK_EUSER_     64
+#define _FOREIGN_MASK_SYSROOT_  128
 
 #define _FOREIGNS_TO_USE_   ( _FOREIGN_MASK_HOME_  \
-                            | _FOREIGN_MASK_USER_  )
+                            | _FOREIGN_MASK_USER_  \
+                            | _FOREIGN_MASK_SYSROOT_)
 
 #define _FOREIGN_HAS_(x)  (0 != ((_FOREIGNS_TO_USE_) & (_FOREIGN_MASK_##x##_)))
 
 enum fkey {
-    _FOREIGN_INVALID_ = -1, 
+    _FOREIGN_INVALID_ = -1,
 #if _FOREIGN_HAS_(HOME)
     HOME,
 #endif
 #if _FOREIGN_HAS_(UID)
-    UID, 
+    UID,
 #endif
 #if _FOREIGN_HAS_(USER)
     USER,
@@ -52,13 +54,16 @@ enum fkey {
     GID, 
 #endif
 #if _FOREIGN_HAS_(EHOME)
-    EHOME, 
+    EHOME,
 #endif
 #if _FOREIGN_HAS_(EUID)
-    EUID, 
+    EUID,
 #endif
 #if _FOREIGN_HAS_(EUSER)
     EUSER,
+#endif
+#if _FOREIGN_HAS_(SYSROOT)
+    SYSROOT,
 #endif
     _FOREIGN_COUNT_
 };

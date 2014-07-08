@@ -63,7 +63,8 @@
 
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
-                    || _FOREIGN_HAS_(GID)  )
+                    || _FOREIGN_HAS_(GID)  \
+                    || _FOREIGN_HAS_(SYSROOT) )
 
 #define _HAS_PWS_   (  _FOREIGN_HAS_(HOME)  \
                     || _FOREIGN_HAS_(USER)  \
@@ -275,7 +276,7 @@ static int errcb( struct parsing *parsing,
 }
 
 /* callback for solving variables */
-static const char *getcb( struct parsing *parsing, 
+static const char *getcb( struct parsing *parsing,
             const char *key, size_t length,
             size_t begin_pos, size_t end_pos)
 {
@@ -284,6 +285,15 @@ static const char *getcb( struct parsing *parsing,
     size_t offset;
     struct reading *reading = parsing->data;
     int id;
+    char *res_sysroot;
+
+    if (strncmp( key, "SYSROOT", 7) == 0) {
+        res_sysroot = getenv("SYSROOT");
+        if (res_sysroot == NULL)
+            return "";
+        else
+            return res_sysroot;
+    }
 
     /* try to find a tzplatform variable */
     id = hashid(key, length);
