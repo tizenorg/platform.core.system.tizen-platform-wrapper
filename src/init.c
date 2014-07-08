@@ -211,7 +211,7 @@ static void foreignpw( struct reading *reading)
 #endif
 
 /* get the foreign variable */
-static const char *foreignvar( struct reading *reading, 
+static const char *foreignvar( struct reading *reading,
                                             const char *name, size_t length)
 {
     enum fkey key = foreign( name, length);
@@ -248,6 +248,15 @@ static const char *foreignvar( struct reading *reading,
         foreignid( reading);
         break;
 #endif
+#if _FOREIGN_HAS_(SYSROOT)
+    case SYSROOT:
+        if (reading->dynvars[SYSROOT] == HNULL) {
+            const char *value;
+            value = getenv("SYSROOT");
+            reading->dynvars[SYSROOT] = heap_strdup( &reading->context->heap, value != NULL ? value : "");
+        }
+    break;
+#endif
 
     default:
         return NULL;
@@ -257,7 +266,7 @@ static const char *foreignvar( struct reading *reading,
 }
 
 /* callback for parsing errors */
-static int errcb( struct parsing *parsing, 
+static int errcb( struct parsing *parsing,
             size_t position, const char *message)
 {
     struct parsinfo info;
@@ -275,7 +284,7 @@ static int errcb( struct parsing *parsing,
 }
 
 /* callback for solving variables */
-static const char *getcb( struct parsing *parsing, 
+static const char *getcb( struct parsing *parsing,
             const char *key, size_t length,
             size_t begin_pos, size_t end_pos)
 {
@@ -312,8 +321,8 @@ static const char *getcb( struct parsing *parsing,
 }
 
 /* callback to define variables */
-static int putcb( struct parsing *parsing, 
-            const char *key, size_t key_length, 
+static int putcb( struct parsing *parsing,
+            const char *key, size_t key_length,
             const char *value, size_t value_length,
             size_t begin_pos, size_t end_pos)
 {

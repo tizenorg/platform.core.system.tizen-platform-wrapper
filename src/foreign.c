@@ -85,6 +85,11 @@ enum fkey foreign( const char *name, size_t length)
         default: break;
         }
     }
+#if _FOREIGN_HAS_(SYSROOT)
+    else if (length == 7)
+        if (name[0]=='S' && name[1]=='Y' && name[2]=='S' && name[3]=='R' && name[4]=='O' && name[5]=='O' && name[6]=='T')
+            return SYSROOT;
+#endif
     return _FOREIGN_INVALID_;
 }
 
