@@ -30,6 +30,16 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([dup2 endpwent munmap strndup])
 
+# Add option to build support for the "SYSROOT" variable
+AC_ARG_WITH(SYSROOT, [--with-sysroot enable SYSROOT])
+if test "$with_sysroot" == "yes"
+then
+    AC_DEFINE([HAVE_SYSROOT], [1], [Add SYSROOT to Tizen variables.])
+    AC_MSG_NOTICE([with-sysroot=yes])
+else
+    AC_MSG_NOTICE([with-sysroot=no])
+fi
+
 AC_CONFIG_FILES([
 Makefile
 src/Makefile
