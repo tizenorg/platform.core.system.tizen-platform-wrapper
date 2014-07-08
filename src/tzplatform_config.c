@@ -65,7 +65,8 @@ static inline void unlock() { }
 
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
-                    || _FOREIGN_HAS_(GID)  )
+                    || _FOREIGN_HAS_(GID)  \
+                    || _FOREIGN_HAS_(SYSROOT) )
 
 #define _HAS_PWS_   (  _FOREIGN_HAS_(HOME)  \
                     || _FOREIGN_HAS_(USER)  \
@@ -291,6 +292,17 @@ static const char *getcb( struct parsing *parsing,
     const struct varassoc *vara;
     size_t offset;
     struct reading *reading = parsing->data;
+
+    if (strncmp( key, "SYSROOT", 7) == 0){
+      char * res_sysroot=getenv("SYSROOT");
+
+      if (res_sysroot == NULL){
+          return "" ;
+      }
+      else{
+          return res_sysroot;
+      }
+    }
 
     /* try to find a tzplatform variable */
     vara = hashvar( key, length);
