@@ -61,9 +61,16 @@
 #include "hashing.h"
 #include "init.h"
 
+#ifdef HAVE_SYSROOT
+#define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
+                    || _FOREIGN_HAS_(EUID) \
+                    || _FOREIGN_HAS_(GID)  \
+                    || _FOREIGN_HAS_(SYSROOT) )
+#else /* HAVE_SYSROOT */
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
                     || _FOREIGN_HAS_(GID)  )
+#endif /* HAVE_SYSROOT */
 
 #define _HAS_PWS_   (  _FOREIGN_HAS_(HOME)  \
                     || _FOREIGN_HAS_(USER)  \
@@ -211,7 +218,7 @@ static void foreignpw( struct reading *reading)
 #endif
 
 /* get the foreign variable */
-static const char *foreignvar( struct reading *reading, 
+static const char *foreignvar( struct reading *reading,
                                             const char *name, size_t length)
 {
     enum fkey key = foreign( name, length);
@@ -257,7 +264,7 @@ static const char *foreignvar( struct reading *reading,
 }
 
 /* callback for parsing errors */
-static int errcb( struct parsing *parsing, 
+static int errcb( struct parsing *parsing,
             size_t position, const char *message)
 {
     struct parsinfo info;
@@ -275,7 +282,7 @@ static int errcb( struct parsing *parsing,
 }
 
 /* callback for solving variables */
-static const char *getcb( struct parsing *parsing, 
+static const char *getcb( struct parsing *parsing,
             const char *key, size_t length,
             size_t begin_pos, size_t end_pos)
 {
@@ -284,6 +291,17 @@ static const char *getcb( struct parsing *parsing,
     size_t offset;
     struct reading *reading = parsing->data;
     int id;
+#ifdef HAVE_SYSROOT
+    char *res_sysroot;
+
+    if (strncmp( key, "SYSROOT", 7) == 0) {
+        res_sysroot = getenv("SYSROOT");
+        if (res_sysroot == NULL)
+            return "";
+        else
+            return res_sysroot;
+    }
+#endif /* HAVE_SYSROOT */
 
     /* try to find a tzplatform variable */
     id = hashid(key, length);
@@ -312,8 +330,8 @@ static const char *getcb( struct parsing *parsing,
 }
 
 /* callback to define variables */
-static int putcb( struct parsing *parsing, 
-            const char *key, size_t key_length, 
+static int putcb( struct parsing *parsing,
+            const char *key, size_t key_length,
             const char *value, size_t value_length,
             size_t begin_pos, size_t end_pos)
 {
