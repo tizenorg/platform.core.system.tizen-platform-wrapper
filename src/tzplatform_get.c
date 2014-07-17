@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include <tzplatform_config.h>
 
@@ -45,15 +47,17 @@ options:\n\
 -s --space      separate with spaces instead of new-lines\n\
 -q --query      silently check that given variables are existing\n\
 -c --continue   continue to process if error\n\
+-u --user  id   set the user using its 'id' (name or numeric)\n\
 \n\
 ";
 
 int main(int argc, char **argv)
 {
-	char *progname = *argv++;
+	char *progname = *argv++, *user = 0;
 	int all = 0, not = 0, query = 0, export = 0, space = 0, list = 0, cont = 0;
 	int i, n, *sel, p;
 	enum tzplatform_variable id;
+	struct passwd *spw;
 
 	/* parse args */
 	while(*argv && **argv=='-') {
@@ -71,6 +75,7 @@ int main(int argc, char **argv)
 					case 'l': x = "list"; break;
 					case 'c': x = "continue"; break;
 					case 'h': x = "help"; break;
+					case 'u': x = "user"; break;
 				}
 				if (!x || strcmp(x,opt))
 					c = 0;
@@ -89,6 +94,7 @@ int main(int argc, char **argv)
 			case 's': space = 1; break;
 			case 'l': list = 1; break;
 			case 'c': cont = 1; break;
+			case 'u': user = *argv; if (user) argv++; break;
 			case 'h':
 				fprintf( stdout, help, basename(progname));
 				return 0;
@@ -167,6 +173,27 @@ int main(int argc, char **argv)
 	/* finished for queries */
 	if (query) 
 		return 0;
+
+	/* set the user */
+	if (user) {
+		for (i=0 ; '0' <= user[i] && user[i] <= '9' ; i++);
+		if (user[i])
+			spw = getpwnam(user);
+		else
+			spw = getpwuid((uid_t)atoi(user));
+		if (!spw) {
+			fprintf( stderr, "error! %s isn't standing for a valid user.\n", user);
+			if (!cont)
+				return 1;
+		} else {
+			i = tzplatform_set_user(spw->pw_uid);
+			if (i) {
+				fprintf( stderr, "error! can't set the valid user %s.\n", user);
+				if (!cont)
+					return 1;
+			}
+		}
+	}
 
 	/* emits the result */
 	for (p = i = 0 ; i < n ; i++) {

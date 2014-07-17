@@ -132,6 +132,20 @@ int pw_get( struct heap *heap, struct pwget **items)
     return result;
 }
 
+int pw_has_uid( uid_t uid)
+{
+    if (oppw() == 0) {
+        while (rdpw()) {
+            if (lengths[iuid] && (int)uid == atoi(starts[iuid])) {
+                clpw();
+                return 1;
+            }
+        }
+        clpw();
+    }
+    return 0;
+}
+
 int pw_get_uid( const char *name, uid_t *uid)
 {
     int result = oppw();
@@ -198,6 +212,16 @@ int pw_get( struct heap *heap, struct pwget **items)
         }
     }
     return 0;
+}
+
+int pw_has_uid( uid_t uid)
+{
+    char buffer[BUFSIZE];
+    struct passwd entry, *pe;
+    int result;
+
+    result = getpwuid_r( uid, &entry, buffer, sizeof buffer, &pe);
+    return !result && pe;
 }
 
 int pw_get_uid( const char *name, uid_t *uid)

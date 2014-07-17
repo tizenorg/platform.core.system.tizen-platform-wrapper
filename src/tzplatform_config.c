@@ -42,12 +42,6 @@
 
 #ifndef NOT_MULTI_THREAD_SAFE
 #include <pthread.h>
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static inline void lock() { pthread_mutex_lock(&mutex); }
-static inline void unlock() { pthread_mutex_unlock(&mutex); }
-#else
-static inline void lock() { }
-static inline void unlock() { }
 #endif
 
 #ifndef CONFIGPATH
@@ -72,20 +66,40 @@ static inline void unlock() { }
                     || _FOREIGN_HAS_(EHOME) \
                     || _FOREIGN_HAS_(EUSER) )
 
-/* structure for reading config files */
-struct reading {
-    int errcount;
-    size_t dynvars[_FOREIGN_COUNT_];
-    size_t offsets[_TZPLATFORM_VARIABLES_COUNT_];
-};
+#define _USER_NOT_SET_  ((uid_t)-1)
 
 /* local and static variables */
 static const char metafilepath[] = CONFIGPATH;
 static const char emptystring[] = "";
-static struct heap heap;
-static enum { RESET=0, ERROR, VALID } state = RESET;
-static const char *var_values[_TZPLATFORM_VARIABLES_COUNT_];
 static const char *var_names[_TZPLATFORM_VARIABLES_COUNT_];
+
+enum STATE { RESET=0, ERROR, VALID };
+
+struct tzplatform_context {
+#ifndef NOT_MULTI_THREAD_SAFE
+    pthread_mutex_t mutex;
+#endif
+    enum STATE state;
+    uid_t user;
+    struct heap heap;
+    const char *values[_TZPLATFORM_VARIABLES_COUNT_];
+};
+
+/* structure for reading config files */
+struct reading {
+    int errcount;
+    struct tzplatform_context *context;
+    size_t dynvars[_FOREIGN_COUNT_];
+    size_t offsets[_TZPLATFORM_VARIABLES_COUNT_];
+};
+
+static struct tzplatform_context global_context = {
+#ifndef NOT_MULTI_THREAD_SAFE
+    .mutex = PTHREAD_MUTEX_INITIALIZER,
+#endif
+    .state = RESET,
+    .user = _USER_NOT_SET_
+};
 
 #include "hash.inc"
 
@@ -100,6 +114,37 @@ static void writerror( const char *format, ...)
     fprintf( stderr, "\n");
 }
 
+static uid_t get_uid(struct tzplatform_context *context)
+{
+    uid_t result;
+
+    result = context->user;
+    if (result == _USER_NOT_SET_)
+        result = getuid();
+
+    return result;
+}
+
+#if _FOREIGN_HAS_(EUID)
+static uid_t get_euid(struct tzplatform_context *context)
+{
+    uid_t result;
+
+    result = context->user;
+    if (result == _USER_NOT_SET_)
+        result = geteuid();
+
+    return result;
+}
+#endif
+
+#if _FOREIGN_HAS_(GID)
+static gid_t get_gid(struct tzplatform_context *context)
+{
+    return getgid();
+}
+#endif
+
 #if _HAS_IDS_
 /* fill the foreign variables for ids */
 static void foreignid( struct reading *reading)
@@ -110,27 +155,27 @@ static void foreignid( struct reading *reading)
 #if _FOREIGN_HAS_(UID)
     /* set the uid */
     if (reading->dynvars[UID] == HNULL) {
-        n = snprintf( buffer, sizeof buffer, "%d", (int)getuid());
+        n = snprintf( buffer, sizeof buffer, "%d", (int)get_uid(reading->context));
         if (0 < n && n < (int)(sizeof buffer))
-            reading->dynvars[UID] = heap_strndup( &heap, buffer, (size_t)n);
+            reading->dynvars[UID] = heap_strndup( &reading->context->heap, buffer, (size_t)n);
     }
 #endif
 
 #if _FOREIGN_HAS_(EUID)
     /* set the euid */
     if (reading->dynvars[EUID] == HNULL) {
-        n = snprintf( buffer, sizeof buffer, "%d", (int)geteuid());
+        n = snprintf( buffer, sizeof buffer, "%d", (int)get_euid(reading->context));
         if (0 < n && n < (int)(sizeof buffer))
-            reading->dynvars[EUID] = heap_strndup( &heap, buffer, (size_t)n);
+            reading->dynvars[EUID] = heap_strndup( &reading->context->heap, buffer, (size_t)n);
     }
 #endif
 
 #if _FOREIGN_HAS_(GID)
     /* set the gid */
     if (reading->dynvars[GID] == HNULL) {
-        n = snprintf( buffer, sizeof buffer, "%d", (int)getgid());
+        n = snprintf( buffer, sizeof buffer, "%d", (int)get_gid(reading->context));
         if (0 < n && n < (int)(sizeof buffer))
-            reading->dynvars[GID] = heap_strndup( &heap, buffer, (size_t)n);
+            reading->dynvars[GID] = heap_strndup( &reading->context->heap, buffer, (size_t)n);
     }
 #endif
 }
@@ -163,7 +208,7 @@ static void foreignpw( struct reading *reading)
         reading->dynvars[USER] == HNULL
 #endif
     ) {
-        snprintf( suid, sizeof suid, "%u", (unsigned)getuid());
+        snprintf( suid, sizeof suid, "%u", (unsigned)get_uid(reading->context));
         uid.id = suid;
         array[n++] = &uid;
     }
@@ -184,7 +229,7 @@ static void foreignpw( struct reading *reading)
         reading->dynvars[EUSER] == HNULL
 #endif
     ) {
-        snprintf( seuid, sizeof seuid, "%u", (unsigned)geteuid());
+        snprintf( seuid, sizeof seuid, "%u", (unsigned)get_euid(reading->context));
         euid.id = seuid;
         array[n++] = &euid;
     }
@@ -195,7 +240,7 @@ static void foreignpw( struct reading *reading)
 
     if (n) {
         array[n] = NULL;
-        if (pw_get( &heap, array) == 0) {
+        if (pw_get( &reading->context->heap, array) == 0) {
 #if _FOREIGN_HAS_(HOME)
             if (uid.set)
                 reading->dynvars[HOME] = uid.home;
@@ -260,7 +305,7 @@ static const char *foreignvar( struct reading *reading,
         return NULL;
     }
     offset = reading->dynvars[key];
-    return offset==HNULL ? NULL : heap_address( &heap, offset);
+    return offset==HNULL ? NULL : heap_address( &reading->context->heap, offset);
 }
 
 /* callback for parsing errors */
@@ -298,7 +343,7 @@ static const char *getcb( struct parsing *parsing,
         /* found: try to use it */
         offset = reading->offsets[(int)vara->id];
         if (offset != HNULL)
-            result = heap_address( &heap, offset);
+            result = heap_address( &reading->context->heap, offset);
         else 
             result = NULL;
     }
@@ -343,7 +388,7 @@ static int putcb( struct parsing *parsing,
         }
 
         /* allocate the variable value */
-        offset = heap_alloc( &heap, value_length+1);
+        offset = heap_alloc( &reading->context->heap, value_length+1);
         if (offset == HNULL) {
             /* error of allocation */
             reading->errcount++;
@@ -352,7 +397,7 @@ static int putcb( struct parsing *parsing,
         else {
             /* record the variable value */
             reading->offsets[(int)vara->id] = offset;
-            string = heap_address( &heap, offset);
+            string = heap_address( &reading->context->heap, offset);
             memcpy( string, value, value_length);
             string[value_length] = 0;
         }
@@ -370,7 +415,7 @@ static int putcb( struct parsing *parsing,
 }
 
 /* initialize the environment */
-static void initialize()
+static void initialize(struct tzplatform_context *context)
 {
     struct buffer buffer;
     struct parsing parsing;
@@ -380,11 +425,12 @@ static void initialize()
 
     /* clear the variables */
     reading.errcount = 0;
+    reading.context = context;
     for (i = 0 ; i < (int)_FOREIGN_COUNT_ ; i++) {
         reading.dynvars[i] = HNULL;
     }
     for (i = 0 ; i < (int)_TZPLATFORM_VARIABLES_COUNT_ ; i++) {
-        var_values[i] = NULL;
+        context->values[i] = NULL;
         reading.offsets[i] = HNULL;
     }
 
@@ -392,16 +438,16 @@ static void initialize()
     result = buffer_create( &buffer, metafilepath);
     if (result != 0) {
         writerror( "can't read file %s",metafilepath);
-        state = ERROR;
+        context->state = ERROR;
         return;
     }
 
     /* create the heap */
-    result = heap_create( &heap, 1);
+    result = heap_create( &context->heap, 1);
     if (result != 0) {
         buffer_destroy( &buffer);
         writerror( "out of memory");
-        state = ERROR;
+        context->state = ERROR;
         return;
     }
 
@@ -422,48 +468,91 @@ static void initialize()
     }
 
     /* set the variables */
-    heap_read_only( &heap);
+    heap_read_only( &context->heap);
     for (i = 0 ; i < (int)_TZPLATFORM_VARIABLES_COUNT_ ; i++) {
         offset = reading.offsets[i];
         if (offset != HNULL)
-            var_values[i] = heap_address( &heap, offset);
+            context->values[i] = heap_address( &context->heap, offset);
         else
             writerror( "the variable %s isn't defined in file %s",
                 tzplatform_getname((enum tzplatform_variable)i), metafilepath);
             /* TODO undefined variable */;
     }
-    state = VALID;
+    context->state = VALID;
 }
 
-static const char *get_lock(enum tzplatform_variable id)
+inline static void lock(struct tzplatform_context *context)
+{
+#ifndef NOT_MULTI_THREAD_SAFE
+    pthread_mutex_lock( &context->mutex);
+#endif
+}
+
+inline static void unlock(struct tzplatform_context *context)
+{
+#ifndef NOT_MULTI_THREAD_SAFE
+    pthread_mutex_unlock( &context->mutex);
+#endif
+}
+
+static const char *get_lock(struct tzplatform_context *context, enum tzplatform_variable id)
 {
     const char *result;
     int offset;
 
-    lock();
+    lock( context);
     offset = (int)id;
     if (offset < 0 || (int)_TZPLATFORM_VARIABLES_COUNT_ <= offset) {
         /*error("invalid id"); TODO*/
         result = NULL;
     }
     else {
-        if (state == RESET)
-            initialize();
-        result = var_values[offset];
+        if (context->state == RESET)
+            initialize( context);
+        result = context->state == ERROR ? NULL : context->values[offset];
     }
     return result;
 }
 
-/* reset the state of the environement */
+int tzplatform_context_create(struct tzplatform_context **result)
+{
+    struct tzplatform_context *context;
+
+    context = malloc( sizeof * context);
+    *result = context;
+    if (context == NULL)
+        return -1;
+
+    context->state = RESET;
+    context->user = _USER_NOT_SET_;
+#ifndef NOT_MULTI_THREAD_SAFE
+    pthread_mutex_init( &context->mutex, NULL);
+#endif
+    return 0;
+}
+
+void tzplatform_context_destroy(struct tzplatform_context *context)
+{
+    if (context->state == VALID)
+            heap_destroy( &context->heap);
+    context->state = ERROR;
+    free( context);
+}
+
 void tzplatform_reset()
 {
-    lock();
-    if (state != RESET) {
-        if (state == VALID)
-            heap_destroy( &heap);
-        state = RESET;
+    tzplatform_context_reset( &global_context);
+}
+
+void tzplatform_context_reset(struct tzplatform_context *context)
+{
+    lock( context);
+    if (context->state != RESET) {
+        if (context->state == VALID)
+            heap_destroy( &context->heap);
+        context->state = RESET;
     }
-    unlock();
+    unlock( context);
 }
 
 int tzplatform_getcount()
@@ -505,52 +594,84 @@ enum tzplatform_variable tzplatform_getid(const char *name)
 
 const char* tzplatform_getenv(enum tzplatform_variable id) 
 {
-    const char *result = get_lock( id);
-    unlock();
+    return tzplatform_context_getenv( &global_context, id);
+}
+
+const char* tzplatform_context_getenv(struct tzplatform_context *context, enum tzplatform_variable id)
+{
+    const char *array[2];
+    const char *result = get_lock( context, id);
+    if (result != NULL) {
+        array[0] = result;
+        array[1] = NULL;
+        result = scratchcat( 0, array);
+    }
+    unlock( context);
     return result;
 }
 
 int tzplatform_getenv_int(enum tzplatform_variable id)
 {
-    const char *value = get_lock( id);
+    return tzplatform_context_getenv_int( &global_context, id);
+}
+
+int tzplatform_context_getenv_int(struct tzplatform_context *context, enum tzplatform_variable id)
+{
+    const char *value = get_lock( context, id);
     int result = value==NULL ? -1 : atoi(value);
-    unlock();
+    unlock( context);
     return result;
 }
 
 const char* tzplatform_mkstr(enum tzplatform_variable id, const char * str)
 {
+    return tzplatform_context_mkstr( &global_context, id, str);
+}
+
+const char* tzplatform_context_mkstr(struct tzplatform_context *context, enum tzplatform_variable id, const char *str)
+{
     const char *array[3];
-    const char *result = get_lock( id);
+    const char *result = get_lock( context, id);
     if (result != NULL) {
         array[0] = result;
         array[1] = str;
         array[2] = NULL;
         result = scratchcat( 0, array);
     }
-    unlock();
+    unlock( context);
     return result;
 }
 
 const char* tzplatform_mkpath(enum tzplatform_variable id, const char * path)
 {
+    return tzplatform_context_mkpath( &global_context, id, path);
+}
+
+const char* tzplatform_context_mkpath(struct tzplatform_context *context, enum tzplatform_variable id, const char *path)
+{
     const char *array[3];
-    const char *result = get_lock( id);
+    const char *result = get_lock( context, id);
     if (result != NULL) {
         array[0] = result;
         array[1] = path;
         array[2] = NULL;
         result = scratchcat( 1, array);
     }
-    unlock();
+    unlock( context);
     return result;
 }
 
 const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path,
                                                         const char* path2)
 {
+    return tzplatform_context_mkpath3( &global_context, id, path, path2);
+}
+
+const char* tzplatform_context_mkpath3(struct tzplatform_context *context, enum tzplatform_variable id, const char *path,
+                                                            const char *path2)
+{
     const char *array[4];
-    const char *result = get_lock( id);
+    const char *result = get_lock( context, id);
     if (result != NULL) {
         array[0] = result;
         array[1] = path;
@@ -558,15 +679,21 @@ const char* tzplatform_mkpath3(enum tzplatform_variable id, const char * path,
         array[3] = NULL;
         result = scratchcat( 1, array);
     }
-    unlock();
+    unlock( context);
     return result;
 }
 
 const char* tzplatform_mkpath4(enum tzplatform_variable id, const char * path,
                                           const char* path2, const char *path3)
 {
+    return tzplatform_context_mkpath4( &global_context, id, path, path2, path3);
+}
+
+const char* tzplatform_context_mkpath4(struct tzplatform_context *context, enum tzplatform_variable id, const char *path,
+                                        const char *path2, const char *path3)
+{
     const char *array[5];
-    const char *result = get_lock( id);
+    const char *result = get_lock( context, id);
     if (result != NULL) {
         array[0] = result;
         array[1] = path;
@@ -575,43 +702,140 @@ const char* tzplatform_mkpath4(enum tzplatform_variable id, const char * path,
         array[4] = NULL;
         result = scratchcat( 1, array);
     }
-    unlock();
+    unlock( context);
     return result;
 }
 
 uid_t tzplatform_getuid(enum tzplatform_variable id)
 {
+    return tzplatform_context_getuid( &global_context, id);
+}
+
+uid_t tzplatform_context_getuid(struct tzplatform_context *context, enum tzplatform_variable id)
+{
     uid_t result = (uid_t)-1;
-    const char *value = get_lock( id);
+    const char *value = get_lock( context, id);
     if (value != NULL) {
         pw_get_uid( value, &result);
     }
-    unlock();
+    unlock( context);
     return result;
 }
 
 gid_t tzplatform_getgid(enum tzplatform_variable id)
 {
+    return tzplatform_context_getgid( &global_context, id);
+}
+
+gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatform_variable id)
+{
     gid_t result = (uid_t)-1;
-    const char *value = get_lock( id);
+    const char *value = get_lock( context, id);
     if (value != NULL) {
         pw_get_gid( value, &result);
     }
-    unlock();
+    unlock( context);
     return result;
+}
+
+int tzplatform_set_user(uid_t uid)
+{
+    return tzplatform_context_set_user( &global_context, uid);
+}
+
+int tzplatform_context_set_user(struct tzplatform_context *context, uid_t uid)
+{
+    int result;
+
+    result = 0;
+    lock( context);
+    if (context->user != uid) {
+	    if (uid != _USER_NOT_SET_ && !pw_has_uid( uid))
+            result = -1;
+        else {
+            if (context->state == VALID)
+                heap_destroy( &context->heap);
+            context->state = RESET;
+            context->user = uid;
+        }
+    }
+    unlock( context);
+
+    return result;
+}
+
+uid_t tzplatform_get_user()
+{
+    return tzplatform_context_get_user( &global_context);
+}
+
+uid_t tzplatform_context_get_user(struct tzplatform_context *context)
+{
+    uid_t result;
+
+    lock( context);
+    result = get_uid( context);
+    unlock( context);
+
+    return result;
+}
+
+void tzplatform_reset_user()
+{
+    tzplatform_context_reset_user( &global_context);
+}
+
+void tzplatform_context_reset_user(struct tzplatform_context *context)
+{
+    tzplatform_context_set_user( context, _USER_NOT_SET_);
 }
 
 #ifdef TEST
 int main() {
-    int i = 0;
-    while(i != (int)_TZPLATFORM_VARIABLES_COUNT_) {
-        enum tzplatform_variable id = (enum tzplatform_variable)i;
-        const char*name = tzplatform_getname(id);
-        const char*value = tzplatform_getenv(id);
-        int xid = (int)tzplatform_getid(name);
-        printf("%d=%d\t%s=%s\n",i,xid,name,value);
+    int i;
+    struct tzplatform_context *context;
+    enum tzplatform_variable id;
+    const char *name;
+    const char *value;
+    int xid;
+    uid_t uid;
+
+    i = 0;
+    while(i != tzplatform_getcount()) {
+        id = (enum tzplatform_variable)i;
+        name = tzplatform_getname(id);
+        value = tzplatform_getenv(id);
+        xid = (int)tzplatform_getid(name);
+        printf("%d=%d\t%s=%s\n",i,xid,name,value?value:"<null>");
         i++;
     }
+
+    printf("------------------------\n");
+    i = tzplatform_context_create(&context);
+    if (i) {
+        printf("error while creating context %d\n",i);
+        return 1;
+    }
+
+    uid = (uid_t)0;
+    i = tzplatform_context_set_user(context, uid);
+    if (i) {
+        printf("error %d while switching to user %d\n",i,(int)uid);
+        return 1;
+    }
+    i = 0;
+    while(i != tzplatform_getcount()) {
+        id = (enum tzplatform_variable)i;
+        name = tzplatform_getname(id);
+        value = tzplatform_context_getenv(context, id);
+        xid = (int)tzplatform_getid(name);
+        printf("%d=%d\t%s=%s\n",i,xid,name,value?value:"<null>");
+        i++;
+    }
+    tzplatform_context_destroy(context);
+
     return 0;
 }
 #endif
+
+

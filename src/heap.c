@@ -45,9 +45,13 @@ inline static size_t align(size_t size)
 /* align to a page size */
 inline static size_t pagealign( size_t size)
 {
+    static size_t pagemask = 0;
     /* we assume that pagesize is a power of 2 */
-    size_t pagemask = (size_t)sysconf(_SC_PAGE_SIZE) - 1;
-    assert( (pagemask & (pagemask+1)) == 0 );
+    if (!pagemask) {
+	pagemask = (size_t)sysconf(_SC_PAGE_SIZE) - 1;
+	assert( pagemask );
+	assert( (pagemask & (pagemask+1)) == 0 );
+    }
     return (size + pagemask) & ~pagemask;
 }
 

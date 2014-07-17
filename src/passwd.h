@@ -34,6 +34,7 @@ struct pwget {
 int pw_get( struct heap *heap, struct pwget **items);
 int pw_get_uid( const char *name, uid_t *uid);
 int pw_get_gid( const char *name, gid_t *gid);
+int pw_has_uid( uid_t uid);
 
 #endif
 
