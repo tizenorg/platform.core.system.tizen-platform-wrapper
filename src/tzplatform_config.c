@@ -57,6 +57,8 @@
 #include "scratch.h"
 #include "passwd.h"
 
+#include "isadmin.h"
+
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
                     || _FOREIGN_HAS_(GID)  )
