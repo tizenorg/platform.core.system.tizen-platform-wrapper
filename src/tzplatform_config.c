@@ -57,6 +57,8 @@
 #include "scratch.h"
 #include "passwd.h"
 
+#include "isadmin.h"
+
 #define _HAS_IDS_   (  _FOREIGN_HAS_(UID)  \
                     || _FOREIGN_HAS_(EUID) \
                     || _FOREIGN_HAS_(GID)  )
@@ -788,6 +790,10 @@ void tzplatform_reset_user()
 void tzplatform_context_reset_user(struct tzplatform_context *context)
 {
     tzplatform_context_set_user( context, _USER_NOT_SET_);
+
+char tzplatform_isadmin(int uid)
+{
+	return is_admin(uid);
 }
 
 #ifdef TEST
