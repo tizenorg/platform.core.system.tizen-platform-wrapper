@@ -21,27 +21,15 @@
  *   Jean-Benoit Martin <jean-benoit.martin@open.eurogiciel.org>
  *
  */
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef SHA256SUM_H
+#define SHA256SUM_H
 
-/* structure of the buffer */
-struct buffer {
-    char    *buffer;    /* start address */
-    size_t   length;    /* length in byte */
-    int      mapped;    /* is memory mapped */
-};
+struct sha256sum;
 
-/*
-   Create the 'buffer' from reading content of the file of 'pathname'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_create( struct buffer *buffer, const char *pathname);
-
-/*
-   Destroy the 'buffer'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_destroy( struct buffer *buffer);
+struct sha256sum *sha256sum_create();
+void sha256sum_destroy(struct sha256sum *s);
+int sha256sum_add_data(struct sha256sum *s, const void *data, size_t length);
+int sha256sum_add_file(struct sha256sum *s, const char *filename);
+int sha256sum_get(struct sha256sum *s, char result[32]);
 
 #endif
-

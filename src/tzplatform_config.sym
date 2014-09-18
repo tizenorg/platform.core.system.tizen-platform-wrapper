@@ -1,0 +1,38 @@
+TPC {
+	global:
+		_context_getenv_int_tzplatform_;
+		_context_getenv_tzplatform_;
+		_context_getgid_tzplatform_;
+		_context_getuid_tzplatform_;
+		_context_mkpath_tzplatform_;
+		_context_mkpath3_tzplatform_;
+		_context_mkpath4_tzplatform_;
+		_context_mkstr_tzplatform_;
+		_getenv_int_tzplatform_;
+		_getenv_tzplatform_;
+		_getgid_tzplatform_;
+		_getid_tzplatform_;
+		_getname_tzplatform_;
+		_getuid_tzplatform_;
+		_mkpath_tzplatform_;
+		_mkpath3_tzplatform_;
+		_mkpath4_tzplatform_;
+		_mkstr_tzplatform_;
+
+
+		tzplatform_context_create;
+		tzplatform_context_destroy;
+		tzplatform_context_get_user;
+		tzplatform_context_reset;
+		tzplatform_context_reset_user;
+		tzplatform_context_set_user;
+		tzplatform_getname;
+		tzplatform_get_user;
+		tzplatform_reset;
+		tzplatform_reset_user;
+		tzplatform_set_user;
+
+	local:
+		*;
+};
+

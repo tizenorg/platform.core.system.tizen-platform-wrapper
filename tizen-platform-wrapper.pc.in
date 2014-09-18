@@ -2,7 +2,8 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
-srcdir=@datadir@
+datarootdir=@datarootdir@
+datadir=@datadir@
 Name: @PACKAGE_NAME@
 Description: Tizen Platform Wrapper library.
 Version: @PACKAGE_VERSION@

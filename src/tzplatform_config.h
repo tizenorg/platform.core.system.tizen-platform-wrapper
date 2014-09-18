@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Intel Corporation.
+ * Copyright (C) 2013-2014 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -230,8 +230,6 @@ void tzplatform_context_destroy(struct tzplatform_context *context);
 
 /*
  Enforces the removal of the previously evaluated tizen platform variables.
-
- Call this function in case of changing of user inside the application.
 */
 extern
 void tzplatform_context_reset(struct tzplatform_context *context);
@@ -247,6 +245,7 @@ extern
 int tzplatform_context_set_user(struct tzplatform_context *context, uid_t uid);
 
 /*
+ Get the user set to the context.
 */
 extern
 uid_t tzplatform_context_get_user(struct tzplatform_context *context);

@@ -21,27 +21,40 @@
  *   Jean-Benoit Martin <jean-benoit.martin@open.eurogiciel.org>
  *
  */
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
-/* structure of the buffer */
-struct buffer {
-    char    *buffer;    /* start address */
-    size_t   length;    /* length in byte */
-    int      mapped;    /* is memory mapped */
+#ifndef HEAP_H
+#error "you should include heap.h"
+#endif
+
+#ifndef FOREIGN_H
+#error "you should include foreign.h"
+#endif
+
+enum STATE { RESET=0, ERROR, VALID };
+
+#define _USER_NOT_SET_  ((uid_t)-1)
+
+struct tzplatform_context {
+#ifndef NOT_MULTI_THREAD_SAFE
+    pthread_mutex_t mutex;
+#endif
+    enum STATE state;
+    uid_t user;
+    struct heap heap;
+    const char *values[_TZPLATFORM_VARIABLES_COUNT_];
 };
 
-/*
-   Create the 'buffer' from reading content of the file of 'pathname'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_create( struct buffer *buffer, const char *pathname);
+inline uid_t get_uid(struct tzplatform_context *context);
 
-/*
-   Destroy the 'buffer'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_destroy( struct buffer *buffer);
+#if _FOREIGN_HAS_(EUID)
+inline uid_t get_euid(struct tzplatform_context *context);
+#endif
+
+#if _FOREIGN_HAS_(GID)
+inline gid_t get_gid(struct tzplatform_context *context);
+#endif
 
 #endif
 

@@ -1,5 +1,5 @@
 Name:           tizen-platform-wrapper
-Version:        1.0
+Version:        2.0
 Release:        0
 License:        LGPL-2.0
 Summary:        A toolkit to generate the libtizen-platform-config library
@@ -8,6 +8,7 @@ Group:          Development/Tools
 Source:         %{name}-%{version}.tar.bz2
 Source1001:     %{name}.manifest
 Requires:       gperf
+Requires:       /usr/bin/sha256sum
 
 %description
 A toolkit to generate the libtizen-platform-config library in tizen-platform-config.
