@@ -21,27 +21,10 @@
  *   Jean-Benoit Martin <jean-benoit.martin@open.eurogiciel.org>
  *
  */
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef INIT_H
+#define INIT_H
 
-/* structure of the buffer */
-struct buffer {
-    char    *buffer;    /* start address */
-    size_t   length;    /* length in byte */
-    int      mapped;    /* is memory mapped */
-};
-
-/*
-   Create the 'buffer' from reading content of the file of 'pathname'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_create( struct buffer *buffer, const char *pathname);
-
-/*
-   Destroy the 'buffer'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_destroy( struct buffer *buffer);
+inline void initialize(struct tzplatform_context *context);
 
 #endif
 

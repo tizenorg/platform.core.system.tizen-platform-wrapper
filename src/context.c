@@ -21,27 +21,55 @@
  *   Jean-Benoit Martin <jean-benoit.martin@open.eurogiciel.org>
  *
  */
-#ifndef BUFFER_H
-#define BUFFER_H
 
-/* structure of the buffer */
-struct buffer {
-    char    *buffer;    /* start address */
-    size_t   length;    /* length in byte */
-    int      mapped;    /* is memory mapped */
-};
 
-/*
-   Create the 'buffer' from reading content of the file of 'pathname'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_create( struct buffer *buffer, const char *pathname);
 
-/*
-   Destroy the 'buffer'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_destroy( struct buffer *buffer);
+#define _GNU_SOURCE
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include <unistd.h>
+
+#ifndef NOT_MULTI_THREAD_SAFE
+#include <pthread.h>
+#endif
+
+#include "tzplatform_variables.h"
+#include "heap.h"
+#include "foreign.h"
+#include "context.h"
+
+
+inline uid_t get_uid(struct tzplatform_context *context)
+{
+    uid_t result;
+
+    result = context->user;
+    if (result == _USER_NOT_SET_)
+        result = getuid();
+
+    return result;
+}
+
+#if _FOREIGN_HAS_(EUID)
+inline uid_t get_euid(struct tzplatform_context *context)
+{
+    uid_t result;
+
+    result = context->user;
+    if (result == _USER_NOT_SET_)
+        result = geteuid();
+
+    return result;
+}
+#endif
+
+#if _FOREIGN_HAS_(GID)
+inline gid_t get_gid(struct tzplatform_context *context)
+{
+    return getgid();
+}
 #endif
 

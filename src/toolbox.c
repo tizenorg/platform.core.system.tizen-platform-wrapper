@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Intel Corporation.
+ * Copyright (C) 2013-2014 Intel Corporation.
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -38,6 +38,7 @@
 #include "heap.h"
 #include "buffer.h"
 #include "foreign.h"
+#include "sha256sum.h"
 
 /*======================================================================*/
 
@@ -87,6 +88,7 @@ pretty     Pretty print of the 'file' (the normalized format)\n\
 h          Produce the C header with the enumeration of the variables\n\
 c          Produce the C code to hash the variable names\n\
 rpm        Produce the macro file to use with RPM\n\
+signup     Produce the signup data for the proxy linked statically\n\
 \n\
 ";
 
@@ -113,7 +115,7 @@ static char genh_tail[] = "\
 static char gperf_head[] = "\
 struct varassoc {\n\
   int offset;\n\
-  enum tzplatform_variable id;\n\
+  int id;\n\
 };\n\
 %%\n\
 ";
@@ -130,6 +132,16 @@ static char *gperf_command[] = {
 static char rpm_head[] = "\
 # I'm generated. Dont edit me! \n\
 \n\
+";
+
+static char signup_head[] = "\
+/* I'm generated. Dont edit me! */\n\
+static char tizen_platform_config_signup[33] = {\n\
+    '\\x00',\n\
+";
+
+static char signup_tail[] = "\
+  };\n\
 ";
 
 /*== GLOBALS VARIABLES =================================================*/
@@ -150,7 +162,7 @@ static int errcount = 0;
 static int dependant = 0;
 
 /* action to perform */
-static enum { CHECK, PRETTY, GENC, GENH, RPM } action = CHECK;
+static enum { CHECK, PRETTY, GENC, GENH, RPM, SIGNUP } action = CHECK;
 
 /* output of error */
 static int notstderr = 0;
@@ -477,6 +489,51 @@ static const char *getcb( struct parsing *parsing,
 
 /*======================================================================*/
 
+/* compare two keys */
+static int keycmp(const void *a, const void *b)
+{
+    const struct key *ka = *(const struct key **)a;
+    const struct key *kb = *(const struct key **)b;
+    return strcmp(ka->name, kb->name);
+}
+
+/* sort the keys and return their count */
+static int sortkeys()
+{
+    struct key *key = keys, **array;
+    int count = 0, index;
+
+    while (key) {
+        key = key->next;
+        count++;
+    }
+
+    array = malloc( count * sizeof * array);
+    if (array == NULL)
+        return -1;
+
+    key = keys;
+    index = 0;
+    
+    while (key) {
+        array[index++] = key;
+        key = key->next;
+    }
+
+    qsort(array, count, sizeof * array, keycmp);
+
+    while (index) {
+	array[--index]->next = key;
+        key = array[index];
+    }
+    keys = key;
+    free( array);
+
+    return count;
+}
+
+/*======================================================================*/
+
 /* pretty print the read file */
 static int pretty( const char *buffer, size_t length, FILE *output)
 {
@@ -512,6 +569,12 @@ static int genh( FILE *output)
     struct key *key;
     int status;
 
+#ifndef NO_SORT_KEYS
+    status = sortkeys();
+    if (status < 0)
+        return status;
+#endif
+
     status = fprintf( output, "%s", genh_head);
     if (status < 0)
         return status;
@@ -534,6 +597,12 @@ static int genc(FILE *output)
     pid_t pid;
     int result, sts;
     size_t l;
+
+#ifndef NO_SORT_KEYS
+    sts = sortkeys();
+    if (sts < 0)
+        return sts;
+#endif
 
     result = pipe(fds);
     if (result != 0)
@@ -592,6 +661,12 @@ static int rpm( FILE *output)
     struct key *key;
     int status;
 
+#ifndef NO_SORT_KEYS
+    status = sortkeys();
+    if (status < 0)
+        return status;
+#endif
+
     status = fprintf( output, "%s", rpm_head);
     if (status < 0)
         return status;
@@ -602,6 +677,58 @@ static int rpm( FILE *output)
                 return status;
         }
     }
+    return 0;
+}
+
+/* generate the signup */
+static int signup( FILE *output)
+{
+    struct key *key;
+    int status;
+    int i;
+    struct sha256sum *sum;
+    char term;
+    char signup[32];
+
+#ifndef NO_SORT_KEYS
+    status = sortkeys();
+    if (status < 0)
+        return status;
+#endif
+
+    sum = sha256sum_create();
+    if (sum == NULL)
+        return -1;
+
+    term = ';';
+    for (key = keys ; key != NULL ; key = key->next) {
+        status = sha256sum_add_data(sum, key->name, strlen(key->name));
+        if (status < 0)
+            return status;
+        status = sha256sum_add_data(sum, &term, 1);
+        if (status < 0)
+            return status;
+    }
+
+    status = sha256sum_get(sum, signup);
+    if (status < 0)
+        return status;
+
+    status = fprintf( output, "%s", signup_head);
+    if (status < 0)
+        return status;
+
+    for (i=0 ; i<32 ; i++) {
+        status = fprintf( output, "%s'\\x%02x'%s",
+                    (i & 7) ? " " : "    ",
+                    (int)(unsigned char)signup[i],
+                    (i & 7) < 7 ? "," : i == 31 ? "\n" : ",\n");
+        if (status < 0)
+            return status;
+    }
+    status = fprintf( output, "%s", signup_tail);
+    if (status < 0)
+        return status;
     return 0;
 }
 
@@ -657,6 +784,9 @@ static int process()
     case RPM:
         rpm( stdout);
         break;
+    case SIGNUP:
+        signup( stdout);
+        break;
     }
 
     buffer_destroy( &buffer);
@@ -699,7 +829,11 @@ static int arguments( char **argv)
             action = RPM;
             argv++;
         }
-        else if (0 == strcmp( *argv, "help")) {
+        else if (0 == strcmp( *argv, "signup")) {
+            action = SIGNUP;
+            argv++;
+        }
+        else if (0 == strcmp( *argv, "help") || 0 == strcmp( *argv, "--help")) {
             printf("%s", help);
             exit(0);
             return -1;

@@ -21,27 +21,42 @@
  *   Jean-Benoit Martin <jean-benoit.martin@open.eurogiciel.org>
  *
  */
-#ifndef BUFFER_H
-#define BUFFER_H
+#define _GNU_SOURCE
 
-/* structure of the buffer */
-struct buffer {
-    char    *buffer;    /* start address */
-    size_t   length;    /* length in byte */
-    int      mapped;    /* is memory mapped */
-};
-
-/*
-   Create the 'buffer' from reading content of the file of 'pathname'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_create( struct buffer *buffer, const char *pathname);
-
-/*
-   Destroy the 'buffer'.
-   Returns 0 if success, -1 if error occured (see then errno)
-*/
-int buffer_destroy( struct buffer *buffer);
-
+#ifdef HAVE_CONFIG_H
+# include "config.h"
 #endif
 
+#include <string.h>
+#include <assert.h>
+
+#include "tzplatform_variables.h"
+#include "hash.inc"
+
+static const char *var_names[_TZPLATFORM_VARIABLES_COUNT_];
+
+inline int hashid(const char *text, unsigned int len)
+{
+    const struct varassoc *vara = hashvar(text, len);
+    return vara ? vara->id : -1;
+}
+
+const char *keyname(int id)
+{
+    const struct varassoc *iter, *end;
+
+    assert(0 <= id && id < _TZPLATFORM_VARIABLES_COUNT_);
+    if (!var_names[0]) {
+        iter = namassoc;
+        end = iter + (sizeof namassoc / sizeof namassoc[0]);
+        while (iter != end) {
+            if (iter->offset >= 0) {
+                assert(0 <= iter->id && iter->id < _TZPLATFORM_VARIABLES_COUNT_);
+                var_names[iter->id] = varpool + iter->offset;
+            }
+            iter++;
+        }
+    }
+    return var_names[id];
+}
+ 
