@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "parser.h"
 #include "heap.h"
@@ -101,8 +102,9 @@ enum tzplatform_variable {\n\
 \t_TZPLATFORM_VARIABLES_INVALID_ = -1,\n\
 ";
 
+static char genh_last[] = "_TZPLATFORM_VARIABLES_COUNT_";
+
 static char genh_tail[] = "\
-\t_TZPLATFORM_VARIABLES_COUNT_\n\
 };\n\
 #ifdef __cplusplus\n\
 }\n\
@@ -203,6 +205,15 @@ static void argerror( const char *format, ...)
 }
 
 /*== MANAGEMENT OF THE LIST OF READ KEYS ===============================*/
+
+/* DJB2 string hash function */
+static inline uint32_t key_hash(const char *name)
+{
+    uint32_t h = 5381;
+    while (*name)
+        h = (h << 5) + h + *name++;
+    return h;
+}
 
 /* search a key of 'name' and length 'lname' and return it or NULL */
 static struct key *key_search( const char *name, size_t lname)
@@ -511,15 +522,21 @@ static int genh( FILE *output)
 {
     struct key *key;
     int status;
+    int count = 0;
 
     status = fprintf( output, "%s", genh_head);
     if (status < 0)
         return status;
     for (key = keys ; key != NULL ; key = key->next) {
-        status = fprintf( output, "\t%s,\n", key->name);
+        status = fprintf( output, "\t%s=0x%08x,\n", key->name, key_hash(key->name));
         if (status < 0)
             return status;
+        ++count;
     }
+    status = fprintf( output, "\t%s=%d,\n", genh_last, count);
+    if (status < 0)
+        return status;
+
     status = fprintf( output, "%s", genh_tail);
     if (status < 0)
         return status;
