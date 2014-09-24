@@ -40,7 +40,9 @@
 char is_admin(int uid) {
 	
 	struct passwd *userinfo = NULL;
+	struct group *systemgroupinfo = NULL;
 	uid_t myuid = 0;
+	gid_t system_gid = 0;
 	gid_t *groups = NULL;
 	int i, nbgroups = 0;
 	
@@ -50,7 +52,18 @@ char is_admin(int uid) {
 		myuid = getuid();
 	else
 		myuid = uid;
-		
+	
+	/* Get the gid of the group named "system" */
+	systemgroupinfo = getgrnam(ADMIN_GRP_NAME);
+	if(systemgroupinfo == NULL) {
+		fprintf( stderr, "isadmin ERROR: cannot find group named \"sudo\" \n");
+		return -1;
+	}
+	
+	system_gid = admingroupinfo->gr_gid;
+	
+	/* Get all the gid of the given uid */
+	
 	userinfo = getpwuid(myuid);
 	
 	/* Need to call this function now to get the number of group to make the
@@ -70,6 +83,8 @@ char is_admin(int uid) {
 		fprintf( stderr, "isadmin ERROR: cannot get groups\n");
 		return -1;
 	}
+	
+	/* Check if the given uid is in the system group */
 	
 	for(i = 0 ; i < nbgroups ; i++) {
 		if(groups[i] == ADMIN_GID)
