@@ -36,6 +36,7 @@
 #include <grp.h>
 
 #include "isadmin.h"
+#include "tzplatform_variables.h"
  
 char is_admin(int uid) {
 	
@@ -87,7 +88,7 @@ char is_admin(int uid) {
 	/* Check if the given uid is in the system group */
 	
 	for(i = 0 ; i < nbgroups ; i++) {
-		if(groups[i] == ADMIN_GID)
+		if(groups[i] == TZ_SYS_ADMIN_GROUP)
 			return 1;
 	}
 	
