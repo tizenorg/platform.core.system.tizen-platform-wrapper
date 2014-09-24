@@ -32,6 +32,7 @@
 #include "tzplatform_config.h"
 
 #include "shared-api.h"
+#include "isadmin.h"
 
 #include "signup.inc"
 
@@ -128,6 +129,11 @@ gid_t tzplatform_getgid(enum tzplatform_variable id)
 gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatform_variable id)
 {
     return _context_getgid_tzplatform_(id, tizen_platform_config_signup, context);
+}
+
+char tzplatform_isadmin(uid_t uid) 
+{
+	return is_admin(uid);
 }
 
 #ifdef TEST
