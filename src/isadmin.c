@@ -36,6 +36,7 @@
 #include <grp.h>
 
 #include "isadmin.h"
+#include "tzplatform_variables.h"
  
 char is_admin(int uid) {
 	
@@ -54,7 +55,7 @@ char is_admin(int uid) {
 		myuid = uid;
 	
 	/* Get the gid of the group named "system" */
-	systemgroupinfo = getgrnam(ADMIN_GRP_NAME);
+	systemgroupinfo = getgrnam(TZ_SYS_ADMIN_GROUP);
 	if(systemgroupinfo == NULL) {
 		fprintf( stderr, "isadmin ERROR: cannot find group named \"sudo\" \n");
 		return -1;
@@ -87,7 +88,7 @@ char is_admin(int uid) {
 	/* Check if the given uid is in the system group */
 	
 	for(i = 0 ; i < nbgroups ; i++) {
-		if(groups[i] == ADMIN_GID)
+		if(groups[i] == system_gid)
 			return 1;
 	}
 	

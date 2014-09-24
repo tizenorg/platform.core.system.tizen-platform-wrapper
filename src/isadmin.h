@@ -36,9 +36,6 @@ extern "C" {
  */
 
 #include <pwd.h>
- 
-#define ADMIN_GRP_NAME "system"
-
 /*
  * Return 0 if the given uid is not in the admin group.
  * Return 1 if the given uid is in the admin group.
