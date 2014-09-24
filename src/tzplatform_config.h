@@ -381,6 +381,29 @@ uid_t tzplatform_context_getuid(struct tzplatform_context *context, enum tzplatf
 extern
 gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatform_variable id);
 
+
+/*
+ Return 1 if given uid is in the system admin group (named "system")
+ Return 0 if not
+ Return -1 in case of error.
+
+ Example:
+        tzplatform_isadmin(1000)
+
+    will return 0 or 1 depends on right of given uid.
+    
+   NOTE :
+   * If you pass the -1 value to this function it will take the current uid given
+   * by the POSIX function getuid(); 
+   
+   *** WARNING : ***
+   * This is a temporary feature
+   * This will be managed by Cynara
+    
+*/
+extern
+char tzplatform_isadmin(uid_t uid);
+
 #ifdef __cplusplus
 }
 #endif
