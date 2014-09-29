@@ -34,14 +34,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <grp.h>
+#include <pwd.h>
 
 #include "isadmin.h"
 #include "tzplatform_variables.h"
- 
-char is_admin(int uid) {
+#include "tzplatform_config.h"
+
+int _is_admin_static_(uid_t uid) {
 	
 	struct passwd *userinfo = NULL;
 	struct group *systemgroupinfo = NULL;
+	const char *sysgrpname = NULL;
 	uid_t myuid = 0;
 	gid_t system_gid = 0;
 	gid_t *groups = NULL;
@@ -55,13 +58,18 @@ char is_admin(int uid) {
 		myuid = uid;
 	
 	/* Get the gid of the group named "system" */
-	systemgroupinfo = getgrnam(TZ_SYS_ADMIN_GROUP);
+	sysgrpname = tzplatform_getname(TZ_SYS_ADMIN_GROUP);
+	if(sysgrpname == NULL) {
+		fprintf( stderr, "isadmin ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
+		return -1;
+	}
+	systemgroupinfo = getgrnam(sysgrpname);
 	if(systemgroupinfo == NULL) {
-		fprintf( stderr, "isadmin ERROR: cannot find group named \"sudo\" \n");
+		fprintf( stderr, "isadmin ERROR: cannot find group named \"%s\"\n", sysgrpname);
 		return -1;
 	}
 	
-	system_gid = admingroupinfo->gr_gid;
+	system_gid = systemgroupinfo->gr_gid;
 	
 	/* Get all the gid of the given uid */
 	
@@ -81,6 +89,7 @@ char is_admin(int uid) {
 	}
 	
 	if (getgrouplist(userinfo->pw_name, userinfo->pw_gid, groups, &nbgroups) == -1) {
+		free(groups);
 		fprintf( stderr, "isadmin ERROR: cannot get groups\n");
 		return -1;
 	}
@@ -88,10 +97,12 @@ char is_admin(int uid) {
 	/* Check if the given uid is in the system group */
 	
 	for(i = 0 ; i < nbgroups ; i++) {
-		if(groups[i] == system_gid)
+		if(groups[i] == system_gid) {
+			free(groups);
 			return 1;
+		}
 	}
-	
+	free(groups);
 	return 0;
 }
 

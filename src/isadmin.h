@@ -35,7 +35,6 @@ extern "C" {
  * 
  */
 
-#include <pwd.h>
 /*
  * Return 0 if the given uid is not in the admin group.
  * Return 1 if the given uid is in the admin group.
@@ -43,7 +42,7 @@ extern "C" {
  * If you pass the -1 value to this function it will take the current uid given
  * by the POSIX function getuid();
 */
-char is_admin(int uid);
+int _is_admin_static_(uid_t uid);
 
 #ifdef __cplusplus
 }

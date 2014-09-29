@@ -131,9 +131,9 @@ gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatf
     return _context_getgid_tzplatform_(id, tizen_platform_config_signup, context);
 }
 
-char tzplatform_isadmin(uid_t uid) 
+int tzplatform_isadmin(uid_t uid) 
 {
-	return is_admin(uid);
+	return _is_admin_static_(uid);
 }
 
 #ifdef TEST
