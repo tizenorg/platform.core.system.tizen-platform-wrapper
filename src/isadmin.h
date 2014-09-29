@@ -42,7 +42,7 @@ extern "C" {
  * If you pass the -1 value to this function it will take the current uid given
  * by the POSIX function getuid();
 */
-int _is_admin_static_(uid_t uid);
+int _has_system_group_static_(uid_t uid);
 
 #ifdef __cplusplus
 }

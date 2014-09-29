@@ -40,7 +40,7 @@
 #include "tzplatform_variables.h"
 #include "tzplatform_config.h"
 
-int _is_admin_static_(uid_t uid) {
+int _has_system_group_static_(uid_t uid) {
 	
 	struct passwd *userinfo = NULL;
 	struct group *systemgroupinfo = NULL;

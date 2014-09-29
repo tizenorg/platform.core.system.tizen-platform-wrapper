@@ -402,7 +402,7 @@ gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatf
     
 */
 extern
-int tzplatform_isadmin(uid_t uid);
+int tzplatform_has_system_group(uid_t uid);
 
 #ifdef __cplusplus
 }
