@@ -388,7 +388,7 @@ gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatf
  Return -1 in case of error.
 
  Example:
-        tzplatform_isadmin(1000)
+        tzplatform_has_system_group(1000)
 
     will return 0 or 1 depends on right of given uid.
     
