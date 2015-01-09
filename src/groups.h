@@ -22,31 +22,27 @@
 extern "C" {
 #endif
  
-#ifndef TIZEN_PLATFORM_WRAPPER_ISADMIN_H
-#define TIZEN_PLATFORM_WRAPPER_ISADMIN_H
+#ifndef TIZEN_PLATFORM_WRAPPER_GROUPS_H
+#define TIZEN_PLATFORM_WRAPPER_GROUPS_H
+
+#include "tzplatform_variables.h"
 
 /*
- * DISCLAIMER :
- *  This header and its associated source file are present to maintain a 
- * temporary solution. We need to know if an user have the privilege for
- * a particular action.
- * 
- * At the end, this feature will be managed by Cynara
- * 
+ * This feature aims to know if a user belongs to a specified group
  */
 
 /*
- * Return 0 if the given uid is not in the admin group.
- * Return 1 if the given uid is in the admin group.
+ * Return 0 if the given uid is not in the specified group.
+ * Return 1 if the given uid is in the specified group.
  * 
  * If you pass the -1 value to this function it will take the current uid given
  * by the POSIX function getuid();
 */
-int _has_system_group_static_(uid_t uid);
+int _has_specified_group_static_(uid_t uid, enum tzplatform_variable group);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* TIZEN_PLATFORM_WRAPPER_ISADMIN_H  */
+#endif /* TIZEN_PLATFORM_WRAPPER_GROUPS_H  */
 

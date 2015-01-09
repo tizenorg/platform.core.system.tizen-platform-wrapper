@@ -36,11 +36,10 @@
 #include <grp.h>
 #include <pwd.h>
 
-#include "isadmin.h"
-#include "tzplatform_variables.h"
+#include "groups.h"
 #include "tzplatform_config.h"
 
-int _has_system_group_static_(uid_t uid) {
+int _has_specified_group_static_(uid_t uid, enum tzplatform_variable group) {
 	
 	struct passwd *userinfo = NULL;
 	struct group *systemgroupinfo = NULL;
@@ -50,7 +49,11 @@ int _has_system_group_static_(uid_t uid) {
 	gid_t *groups = NULL;
 	int i, nbgroups = 0;
 	
-	
+	if (group != TZ_SYS_USER_GROUP || group != TZ_SYS_ADMIN_GROUP) {
+		fprintf( stderr, "groups ERROR: group is not valid \n");
+		return -1;
+	}
+
 	if(uid == -1)
 		/* Get current uid */
 		myuid = getuid();
@@ -58,14 +61,14 @@ int _has_system_group_static_(uid_t uid) {
 		myuid = uid;
 	
 	/* Get the gid of the group named "system" */
-	sysgrpname = tzplatform_getname(TZ_SYS_ADMIN_GROUP);
+	sysgrpname = tzplatform_getname(group);
 	if(sysgrpname == NULL) {
-		fprintf( stderr, "isadmin ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
+		fprintf( stderr, "groups ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
 		return -1;
 	}
 	systemgroupinfo = getgrnam(sysgrpname);
 	if(systemgroupinfo == NULL) {
-		fprintf( stderr, "isadmin ERROR: cannot find group named \"%s\"\n", sysgrpname);
+		fprintf( stderr, "groups ERROR: cannot find group named \"%s\"\n", sysgrpname);
 		return -1;
 	}
 	
@@ -78,19 +81,19 @@ int _has_system_group_static_(uid_t uid) {
 	/* Need to call this function now to get the number of group to make the
 	   malloc correctly sized */
 	if (getgrouplist(userinfo->pw_name, userinfo->pw_gid, groups, &nbgroups) != -1) {
-		fprintf( stderr, "isadmin ERROR: cannot get number of groups\n");
+		fprintf( stderr, "groups ERROR: cannot get number of groups\n");
 		return -1;
 	}
 	
 	groups = malloc(nbgroups * sizeof (gid_t));
 	if (groups == NULL) {
-		fprintf( stderr, "isadmin ERROR: malloc cannot allocate memory\n");
+		fprintf( stderr, "groups ERROR: malloc cannot allocate memory\n");
 		return -1;
 	}
 	
 	if (getgrouplist(userinfo->pw_name, userinfo->pw_gid, groups, &nbgroups) == -1) {
 		free(groups);
-		fprintf( stderr, "isadmin ERROR: cannot get groups\n");
+		fprintf( stderr, "groups ERROR: cannot get groups\n");
 		return -1;
 	}
 	
