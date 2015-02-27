@@ -197,15 +197,15 @@ extern
 uid_t tzplatform_getuid(enum tzplatform_variable id);
 
 /*
- Return the gid for a given group name, stored in variable <id>
+ Return the gid for a given user name, stored in variable <id>
  Retun -1 in case of error.
 
  Example:
-    if TZ_USER_GROUP=="app" then calling:
+    if TZ_USER_NAME=="app" then calling:
 
-       tzplatform_getuid(TZ_USER_GROUP)
+       tzplatform_getuid(TZ_USER_NAME)
 
-    will return the gid of the group 'app'
+    will return the gid of the user 'app'
 */
 extern
 gid_t tzplatform_getgid(enum tzplatform_variable id);
@@ -368,15 +368,15 @@ extern
 uid_t tzplatform_context_getuid(struct tzplatform_context *context, enum tzplatform_variable id);
 
 /*
- Return the gid for a given group name, stored in variable <id>
+ Return the gid for a given user name, stored in variable <id>
  Retun -1 in case of error.
 
  Example:
-    if TZ_USER_GROUP=="app" then calling:
+    if TZ_USER_NAME=="app" then calling:
 
-       tzplatform_context_getuid(context, TZ_USER_GROUP)
+       tzplatform_context_getuid(context, TZ_USER_NAME)
 
-    will return the gid of the group 'app'
+    will return the gid of the user 'app'
 */
 extern
 gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatform_variable id);
