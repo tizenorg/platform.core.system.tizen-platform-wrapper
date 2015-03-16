@@ -36,40 +36,43 @@
 #include <grp.h>
 #include <pwd.h>
 
-#include "isadmin.h"
-#include "tzplatform_variables.h"
+#include "groups.h"
 #include "tzplatform_config.h"
 
-int _has_system_group_static_(uid_t uid) {
+int _has_specified_group_static_(uid_t uid, enum tzplatform_variable group) {
 	
 	struct passwd *userinfo = NULL;
-	struct group *systemgroupinfo = NULL;
-	const char *sysgrpname = NULL;
+	struct group *groupinfo = NULL;
+	const char *grpname = NULL;
 	uid_t myuid = 0;
-	gid_t system_gid = 0;
+	gid_t gid = 0;
 	gid_t *groups = NULL;
 	int i, nbgroups = 0;
 	
-	
+	if (group != TZ_SYS_USER_GROUP || group != TZ_SYS_ADMIN_GROUP) {
+		fprintf( stderr, "groups ERROR: group is not valid \n");
+		return -1;
+	}
+
 	if(uid == -1)
 		/* Get current uid */
 		myuid = getuid();
 	else
 		myuid = uid;
 	
-	/* Get the gid of the group named "system" */
-	sysgrpname = tzplatform_getname(TZ_SYS_ADMIN_GROUP);
-	if(sysgrpname == NULL) {
-		fprintf( stderr, "isadmin ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
+	/* Get the gid of the group */
+	grpname = tzplatform_getname(group);
+	if(grpname == NULL) {
+		fprintf( stderr, "groups ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
 		return -1;
 	}
-	systemgroupinfo = getgrnam(sysgrpname);
-	if(systemgroupinfo == NULL) {
-		fprintf( stderr, "isadmin ERROR: cannot find group named \"%s\"\n", sysgrpname);
+	groupinfo = getgrnam(grpname);
+	if(groupinfo == NULL) {
+		fprintf( stderr, "groups ERROR: cannot find group named \"%s\"\n", grpname);
 		return -1;
 	}
 	
-	system_gid = systemgroupinfo->gr_gid;
+	gid = groupinfo->gr_gid;
 	
 	/* Get all the gid of the given uid */
 	
@@ -78,26 +81,26 @@ int _has_system_group_static_(uid_t uid) {
 	/* Need to call this function now to get the number of group to make the
 	   malloc correctly sized */
 	if (getgrouplist(userinfo->pw_name, userinfo->pw_gid, groups, &nbgroups) != -1) {
-		fprintf( stderr, "isadmin ERROR: cannot get number of groups\n");
+		fprintf( stderr, "groups ERROR: cannot get number of groups\n");
 		return -1;
 	}
 	
 	groups = malloc(nbgroups * sizeof (gid_t));
 	if (groups == NULL) {
-		fprintf( stderr, "isadmin ERROR: malloc cannot allocate memory\n");
+		fprintf( stderr, "groups ERROR: malloc cannot allocate memory\n");
 		return -1;
 	}
 	
 	if (getgrouplist(userinfo->pw_name, userinfo->pw_gid, groups, &nbgroups) == -1) {
 		free(groups);
-		fprintf( stderr, "isadmin ERROR: cannot get groups\n");
+		fprintf( stderr, "groups ERROR: cannot get groups\n");
 		return -1;
 	}
 	
-	/* Check if the given uid is in the system group */
+	/* Check if the given uid is in the specified group */
 	
 	for(i = 0 ; i < nbgroups ; i++) {
-		if(groups[i] == system_gid) {
+		if(groups[i] == gid) {
 			free(groups);
 			return 1;
 		}
