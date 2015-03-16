@@ -404,23 +404,6 @@ gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatf
 extern
 int tzplatform_has_system_group(uid_t uid);
 
-/*
- Return 1 if given uid is in the regular users group (named "users")
- Return 0 if not
- Return -1 in case of error.
-
- Example:
-        tzplatform_has_users_group(1000)
-
-    will return 0 or 1 depends on right of given uid.
-
-   NOTE :
-   * If you pass the -1 value to this function it will take the current uid given
-   * by the POSIX function getuid();
-*/
-extern
-int tzplatform_has_users_group(uid_t uid);
-
 #ifdef __cplusplus
 }
 #endif

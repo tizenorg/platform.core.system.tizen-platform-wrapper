@@ -32,7 +32,7 @@
 #include "tzplatform_config.h"
 
 #include "shared-api.h"
-#include "groups.h"
+#include "isadmin.h"
 
 #include "signup.inc"
 
@@ -133,12 +133,7 @@ gid_t tzplatform_context_getgid(struct tzplatform_context *context, enum tzplatf
 
 int tzplatform_has_system_group(uid_t uid) 
 {
-	return _has_specified_group_static_(uid, TZ_SYS_ADMIN_GROUP);
-}
-
-int tzplatform_has_users_group(uid_t uid)
-{
-  return _has_specified_group_static_(uid, TZ_SYS_USER_GROUP);
+	return _has_system_group_static_(uid);
 }
 
 #ifdef TEST
