@@ -35,7 +35,7 @@
 
 static const char *var_names[_TZPLATFORM_VARIABLES_COUNT_];
 
-inline int hashid(const char *text, unsigned int len)
+int hashid(const char *text, unsigned int len)
 {
     const struct varassoc *vara = hashvar(text, len);
     return vara ? vara->id : -1;

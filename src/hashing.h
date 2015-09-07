@@ -24,7 +24,7 @@
 #ifndef HASHING_H
 #define HASHING_H
 
-inline int hashid(const char *text, unsigned int len);
+int hashid(const char *text, unsigned int len);
 const char *keyname(int id);
 
 #endif

@@ -24,7 +24,7 @@
 #ifndef INIT_H
 #define INIT_H
 
-inline void initialize(struct tzplatform_context *context);
+void initialize(struct tzplatform_context *context);
 
 #endif
 
