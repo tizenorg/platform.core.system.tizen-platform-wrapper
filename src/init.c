@@ -363,7 +363,7 @@ static int putcb( struct parsing *parsing,
 }
 
 /* initialize the environment */
-inline void initialize(struct tzplatform_context *context)
+void initialize(struct tzplatform_context *context)
 {
     struct buffer buffer;
     struct parsing parsing;

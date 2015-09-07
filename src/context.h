@@ -46,14 +46,14 @@ struct tzplatform_context {
     const char *values[_TZPLATFORM_VARIABLES_COUNT_];
 };
 
-inline uid_t get_uid(struct tzplatform_context *context);
+uid_t get_uid(struct tzplatform_context *context);
 
 #if _FOREIGN_HAS_(EUID)
-inline uid_t get_euid(struct tzplatform_context *context);
+uid_t get_euid(struct tzplatform_context *context);
 #endif
 
 #if _FOREIGN_HAS_(GID)
-inline gid_t get_gid(struct tzplatform_context *context);
+gid_t get_gid(struct tzplatform_context *context);
 #endif
 
 #endif
