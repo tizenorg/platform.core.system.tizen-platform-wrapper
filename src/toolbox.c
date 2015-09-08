@@ -703,14 +703,19 @@ static int signup( FILE *output)
     term = ';';
     for (key = keys ; key != NULL ; key = key->next) {
         status = sha256sum_add_data(sum, key->name, strlen(key->name));
-        if (status < 0)
+        if (status < 0) {
+            sha256sum_destroy(sum);
             return status;
+        }
         status = sha256sum_add_data(sum, &term, 1);
-        if (status < 0)
+        if (status < 0) {
+            sha256sum_destroy(sum);
             return status;
+        }
     }
 
     status = sha256sum_get(sum, signup);
+    sha256sum_destroy(sum);
     if (status < 0)
         return status;
 
