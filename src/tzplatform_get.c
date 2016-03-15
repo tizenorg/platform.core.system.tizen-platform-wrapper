@@ -57,7 +57,8 @@ int main(int argc, char **argv)
 	int all = 0, not = 0, query = 0, export = 0, space = 0, list = 0, cont = 0;
 	int i, n, *sel, p;
 	enum tzplatform_variable id;
-	struct passwd *spw;
+	struct passwd pwd, *spw;
+	char buf[1024];
 
 	/* parse args */
 	while(*argv && **argv=='-') {
@@ -178,9 +179,9 @@ int main(int argc, char **argv)
 	if (user) {
 		for (i=0 ; '0' <= user[i] && user[i] <= '9' ; i++);
 		if (user[i])
-			spw = getpwnam(user);
+			getpwnam_r(user, &pwd, buf, sizeof(buf), &spw);
 		else
-			spw = getpwuid((uid_t)atoi(user));
+			getpwuid_r(user, &pwd, buf, sizeof(buf), &spw);
 		if (!spw) {
 			fprintf( stderr, "error! %s isn't standing for a valid user.\n", user);
 			if (!cont)

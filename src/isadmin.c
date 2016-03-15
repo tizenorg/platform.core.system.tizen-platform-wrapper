@@ -42,9 +42,10 @@
 
 int _has_system_group_static_(uid_t uid) {
 	
-	struct passwd *userinfo = NULL;
-	struct group *systemgroupinfo = NULL;
+	struct passwd pwd, *userinfo = NULL;
+	struct group grp, *systemgroupinfo = NULL;
 	const char *sysgrpname = NULL;
+	char buf[1024];
 	uid_t myuid = 0;
 	gid_t system_gid = 0;
 	gid_t *groups = NULL;
@@ -63,7 +64,7 @@ int _has_system_group_static_(uid_t uid) {
 		fprintf( stderr, "isadmin ERROR: variable TZ_SYS_ADMIN_GROUP is NULL");
 		return -1;
 	}
-	systemgroupinfo = getgrnam(sysgrpname);
+	getgrnam_r(sysgrpname, &grp, buf, sizeof(buf), &systemgroupinfo);
 	if(systemgroupinfo == NULL) {
 		fprintf( stderr, "isadmin ERROR: cannot find group named \"%s\"\n", sysgrpname);
 		return -1;
@@ -73,7 +74,7 @@ int _has_system_group_static_(uid_t uid) {
 	
 	/* Get all the gid of the given uid */
 	
-	userinfo = getpwuid(myuid);
+	getpwuid(myuid, &pwd, buf, sizeof(buf), &userinfo);
 	
 	/* Need to call this function now to get the number of group to make the
 	   malloc correctly sized */
