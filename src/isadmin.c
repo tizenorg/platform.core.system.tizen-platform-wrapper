@@ -74,7 +74,7 @@ int _has_system_group_static_(uid_t uid) {
 	
 	/* Get all the gid of the given uid */
 	
-	getpwuid(myuid, &pwd, buf, sizeof(buf), &userinfo);
+	getpwuid_r(myuid, &pwd, buf, sizeof(buf), &userinfo);
 	
 	/* Need to call this function now to get the number of group to make the
 	   malloc correctly sized */
