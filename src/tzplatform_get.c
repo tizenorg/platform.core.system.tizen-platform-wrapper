@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 		if (user[i])
 			getpwnam_r(user, &pwd, buf, sizeof(buf), &spw);
 		else
-			getpwuid_r(user, &pwd, buf, sizeof(buf), &spw);
+			getpwuid_r(atoi(user), &pwd, buf, sizeof(buf), &spw);
 		if (!spw) {
 			fprintf( stderr, "error! %s isn't standing for a valid user.\n", user);
 			if (!cont)
