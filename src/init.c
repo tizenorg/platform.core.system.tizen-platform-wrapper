@@ -159,6 +159,7 @@ static void foreignpw( struct reading *reading)
         snprintf( suid, sizeof suid, "%u", (unsigned)get_uid(reading->context));
         uid.id = suid;
         array[n++] = &uid;
+        uid.set = 1;
     }
     else {
         uid.set = 0;
@@ -180,6 +181,7 @@ static void foreignpw( struct reading *reading)
         snprintf( seuid, sizeof seuid, "%u", (unsigned)get_euid(reading->context));
         euid.id = seuid;
         array[n++] = &euid;
+        euid.set = 1;
     }
     else {
         euid.set = 0;
